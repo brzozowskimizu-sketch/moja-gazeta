@@ -7,68 +7,77 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
-# POBIERANIE KLUCZA Z USTAWIEŃ GITHUBA
+# POBIERANIE KLUCZA
 API_KEY = os.getenv("GEMINI_KEY")
 genai.configure(api_key=API_KEY)
 
-# --- NOWA KONFIGURACJA OMIJAJĄCA BLOKADY ---
-# Ustawiamy wszystkie filtry na BLOCK_NONE
-safety_config = [
-    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-]
+# Konfiguracja modelu z obejściem filtrów
+model = genai.GenerativeModel('gemini-1.5-flash',
+    safety_settings=[
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"}
+    ])
 
-model = genai.GenerativeModel(
-    model_name='gemini-1.5-flash',
-    safety_settings=safety_config
-)
+KATEGORIE = {
+    "POLSKA": "https://tvn24.pl/polska.xml",
+    "ŚWIAT": "https://tvn24.pl/swiat.xml",
+    "BIZNES": "https://tvn24.pl/biznes.xml"
+}
 
 def generuj_artykul_ai(tytul, opis):
-    # Dodajemy instrukcję bezpieczeństwa do samego promptu
-    prompt = f"""
-    Jesteś profesjonalnym, obiektywnym dziennikarzem. 
-    Napisz krótką relację (3 zdania) na podstawie faktów: {tytul}. 
-    Opis pomocniczy: {opis}.
-    UWAGA: To są oficjalne wiadomości ze świata, opisz je bez oceniania.
-    Używaj formatu HTML <p>.
-    """
+    prompt = f"Jesteś dziennikarzem. Napisz 3 zdania o: {tytul}. Kontekst: {opis}. Użyj tylko <p>."
     try:
         response = model.generate_content(prompt)
-        # Sprawdzamy czy AI nie zwróciło pustki przez filtry
-        if response.candidates and response.candidates[0].content.parts:
+        if response.text:
             return response.text
-        return f"<p>AI uznało ten temat za zbyt wrażliwy, ale tytuł to: <strong>{tytul}</strong></p>"
-    except Exception as e:
-        return f"<p>Błąd systemu: {tytul}</p>"
+        return f"<p>News: {tytul}</p>"
+    except:
+        return f"<p>Wiadomość dnia: {tytul}</p>"
 
 def pobierz_obrazek(url):
     try:
         res = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=5)
         soup = BeautifulSoup(res.content, 'html.parser')
-        return soup.find('meta', property='og:image')['content']
-    except: return None
+        img = soup.find('meta', property='og:image')
+        return img['content'] if img else ""
+    except: return ""
 
 def stworz_gazete():
     teraz = datetime.now().strftime("%d.%m.%Y | %H:%M")
     html_items = ""
     
     for nazwa, url in KATEGORIE.items():
-        feed = feedparser.parse(url)
-        html_items += f"<div style='background:#1a73e8; color:white; padding:10px; margin-top:20px;'>{nazwa}</div>"
-        for news in feed.entries[:2]:
-            img = pobierz_obrazek(news.link)
-            tresc = generuj_artykul_ai(news.title, getattr(news, 'summary', ''))
-            img_tag = f"<img src='{img}' style='width:100%; border-radius:10px;'>" if img else ""
-            html_items += f"<div style='margin-bottom:30px;'><h2>{news.title}</h2>{img_tag}{tresc}</div>"
+        try:
+            context = ssl._create_unverified_context()
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, context=context) as response:
+                feed = feedparser.parse(response.read())
+            
+            html_items += f"<div style='background:#1a73e8;color:white;padding:10px;margin-top:30px;border-radius:5px;'>{nazwa}</div>"
+            
+            for news in feed.entries[:2]:
+                img = pobierz_obrazek(news.link)
+                tresc = generuj_artykul_ai(news.title, getattr(news, 'summary', ''))
+                img_tag = f"<img src='{img}' style='width:100%;border-radius:10px;margin:10px 0;'>" if img else ""
+                html_items += f"<div style='border-bottom:1px solid #ddd;padding:20px 0;'><h2>{news.title}</h2>{img_tag}{tresc}</div>"
+        except: continue
 
-    szablon = f"<html><body style='max-width:800px; margin:auto; font-family:sans-serif; padding:20px;'><h1>THE AI TIMES</h1><p>Aktualizacja: {teraz}</p>{html_items}</body></html>"
+    szablon = f"""
+    <html>
+    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+    <body style="font-family:sans-serif;max-width:800px;margin:auto;padding:20px;background:#f4f4f4;">
+        <div style="background:white;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="text-align:center;font-size:40px;margin:0;">THE AI TIMES</h1>
+            <p style="text-align:center;color:gray;">Wydanie: {teraz}</p>
+            {html_items}
+        </div>
+    </body>
+    </html>"""
     
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(szablon)
 
 if __name__ == "__main__":
-
     stworz_gazete()
-
