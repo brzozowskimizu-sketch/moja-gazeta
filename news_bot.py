@@ -7,30 +7,23 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
-# 1. KONFIGURACJA AI - WYŁĄCZENIE FILTRÓW
+# 1. KONFIGURACJA
 API_KEY = os.getenv("GEMINI_KEY")
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash',
-    safety_settings=[
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"}
-    ])
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 KATEGORIE = {
-    "WYRÓŻNIONE": "https://www.espn.com/espn/rss/nba/news",
-    "TABELA I ANALIZY": "https://www.cbssports.com/rss/headlines/nba/"
+    "GŁÓWNE WIADOMOŚCI": "https://www.espn.com/espn/rss/nba/news",
+    "NAJNOWSZE Z PARKIETÓW": "https://www.cbssports.com/rss/headlines/nba/"
 }
 
 def generuj_po_polsku(tytul, opis):
-    # Bardzo surowy prompt, żeby AI nie mogło "uciec" w angielski
-    prompt = f"ZAKAZ ANGIELSKIEGO. Napisz po polsku 2 zdania o: {tytul}. Kontekst: {opis}. Tylko czysty tekst."
+    prompt = f"Jesteś dziennikarzem NBA. Napisz krótki wstęp (2 zdania) po polsku do artykułu: '{tytul}'. Użyj kontekstu: '{opis}'."
     try:
         response = model.generate_content(prompt)
-        return response.text if response.text else "Nowe wydarzenia w NBA. Sprawdź szczegóły akcji."
+        return response.text if len(response.text) > 10 else "Kliknij, aby poznać szczegóły tej sensacyjnej akcji w NBA."
     except:
-        return "Aktualizacja z parkietów NBA. Kliknij po więcej informacji."
+        return "Zapraszamy do lektury pełnej relacji z ostatniego meczu."
 
 def pobierz_obrazek(url):
     try:
@@ -42,8 +35,7 @@ def pobierz_obrazek(url):
 
 def stworz_gazete():
     teraz = datetime.now().strftime("%d.%m.%Y | %H:%M")
-    main_news = ""
-    side_news = ""
+    html_items = ""
     
     for nazwa, url in KATEGORIE.items():
         try:
@@ -52,63 +44,57 @@ def stworz_gazete():
             with urllib.request.urlopen(req, context=context) as response:
                 feed = feedparser.parse(response.read())
             
-            for i, news in enumerate(feed.entries[:3]):
+            html_items += f"<div class='section-header'>{nazwa}</div>"
+            
+            for news in feed.entries[:3]:
                 img = pobierz_obrazek(news.link)
                 opis_pl = generuj_po_polsku(news.title, getattr(news, 'description', ''))
                 
-                # Główna kolumna (lewa)
-                if i == 0:
-                    main_news += f"""
-                    <div class='main-card'>
-                        <div class='tag'>NEWS</div>
-                        <img src='{img}'>
-                        <h2>{news.title}</h2>
+                # LINKOWANIE: Każdy artykuł ma teraz przycisk 'CZYTAJ WIĘCEJ'
+                html_items += f"""
+                <div class='article-card'>
+                    <img src='{img}' class='hero-img'>
+                    <div class='info'>
+                        <span class='category'>NBA TODAY</span>
+                        <h2><a href='{news.link}' target='_blank'>{news.title}</a></h2>
                         <p>{opis_pl}</p>
-                        <div class='comments'>
-                            <b>Mirek:</b> Solidne info! | <b>Młody:</b> 🔥 GOAT!
+                        <div class='footer-meta'>
+                            <a href='{news.link}' target='_blank' class='read-btn'>CZYTAJ PEŁNY ARTYKUŁ →</a>
+                            <button class='like-btn' onclick='this.classList.toggle("liked")'>❤️</button>
                         </div>
-                    </div>"""
-                else:
-                    # Boczna kolumna (prawa)
-                    side_news += f"""
-                    <div class='side-item'>
-                        <img src='{img}'>
-                        <div>
-                            <h4>{news.title}</h4>
-                            <span>{teraz}</span>
-                        </div>
-                    </div>"""
+                    </div>
+                </div>"""
         except: continue
 
     szablon = f"""
     <html><head><meta charset="utf-8">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body {{ background: #1a1a1a; color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }}
-        .grid {{ display: grid; grid-template-columns: 2fr 1fr; gap: 30px; max-width: 1200px; margin: auto; }}
-        header {{ text-align: left; padding: 20px 0; border-bottom: 1px solid #333; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }}
-        h1 {{ font-weight: 900; font-size: 2.5rem; text-transform: uppercase; margin: 0; }}
-        h1 span {{ color: #f58426; }}
-        .main-card {{ background: #252525; padding: 20px; border-radius: 4px; position: relative; }}
-        .main-card img {{ width: 100%; border-radius: 4px; margin: 15px 0; }}
-        .tag {{ position: absolute; top: 35px; left: 35px; background: #f58426; color: #000; font-size: 0.7rem; font-weight: bold; padding: 2px 10px; }}
-        .side-panel {{ background: #252525; padding: 20px; border-radius: 4px; }}
-        .side-item {{ display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }}
-        .side-item img {{ width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }}
-        .side-item h4 {{ margin: 0; font-size: 0.9rem; line-height: 1.2; }}
-        .comments {{ margin-top: 20px; font-size: 0.8rem; color: #f58426; border-top: 1px solid #333; padding-top: 10px; }}
-        h2 {{ font-size: 2rem; margin: 10px 0; }}
-        p {{ color: #aaa; line-height: 1.6; }}
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap');
+        body {{ background: #121212; color: #fff; font-family: 'Roboto', sans-serif; margin: 0; padding: 20px; }}
+        .wrap {{ max-width: 900px; margin: auto; }}
+        header {{ text-align: center; padding: 40px 0; background: linear-gradient(to bottom, #1d428a, #121212); border-radius: 15px; margin-bottom: 30px; }}
+        h1 {{ font-family: 'Oswald', sans-serif; font-size: 4rem; margin: 0; color: #f58426; }}
+        .section-header {{ font-family: 'Oswald', sans-serif; font-size: 1.5rem; color: #f58426; margin: 40px 0 20px 0; border-bottom: 2px solid #333; }}
+        
+        /* STYLIZACJA KARTY */
+        .article-card {{ background: #1e1e1e; border-radius: 12px; overflow: hidden; margin-bottom: 30px; border: 1px solid #333; transition: 0.3s; }}
+        .article-card:hover {{ transform: translateY(-5px); border-color: #f58426; }}
+        .hero-img {{ width: 100%; height: 400px; object-fit: cover; }}
+        .info {{ padding: 25px; }}
+        h2 a {{ color: #fff; text-decoration: none; font-family: 'Oswald', sans-serif; font-size: 1.8rem; }}
+        h2 a:hover {{ color: #f58426; }}
+        p {{ color: #aaa; font-size: 1.1rem; line-height: 1.6; }}
+        
+        /* PRZYCISKI */
+        .footer-meta {{ display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }}
+        .read-btn {{ background: #f58426; color: #000; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 0.9rem; }}
+        .like-btn {{ background: #333; border: none; color: #fff; padding: 10px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }}
+        .like-btn.liked {{ background: #e0245e; }}
     </style></head>
-    <body>
-        <div class='container'>
-            <header><h1>NBA <span>TODAY</span></h1><div>{teraz}</div></header>
-            <div class='grid'>
-                <div class='left-col'>{main_news}</div>
-                <div class='side-panel'><h3>LIVE SCORES</h3>{side_news}</div>
-            </div>
-        </div>
-    </body></html>"""
+    <body><div class='wrap'>
+        <header><h1>NBA DAILY PL</h1><p>AKTUALIZACJA: {teraz}</p></header>
+        {html_items}
+    </div></body></html>"""
     with open("index.html", "w", encoding="utf-8") as f: f.write(szablon)
 
 if __name__ == "__main__": stworz_gazete()
