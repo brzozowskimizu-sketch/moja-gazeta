@@ -11,11 +11,13 @@ from bs4 import BeautifulSoup
 API_KEY = os.getenv("GEMINI_KEY")
 genai.configure(api_key=API_KEY)
 
-# Tryb 1.5 Flash z wyłączonymi restrykcjami dla newsów
+# Tryb 1.5 Flash z WYŁĄCZONYMI filtrami dla dziennikarstwa
 model = genai.GenerativeModel('gemini-1.5-flash',
     safety_settings=[
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"}
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"}
     ])
 
 KATEGORIE = {
@@ -57,4 +59,5 @@ def stworz_gazete():
         f.write(szablon)
 
 if __name__ == "__main__":
+
     stworz_gazete()
