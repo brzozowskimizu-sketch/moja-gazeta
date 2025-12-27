@@ -12,55 +12,44 @@ import re
 API_KEY = os.getenv("GEMINI_KEY")
 genai.configure(api_key=API_KEY)
 
-model = genai.GenerativeModel('gemini-1.5-flash',
-    safety_settings=[
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"}
-    ])
+model = genai.GenerativeModel('gemini-1.5-flash')
 
+# ŹRÓDŁA NBA (RSS z ESPN i CBS Sports)
 KATEGORIE = {
-    "POLSKA": "https://tvn24.pl/polska.xml",
-    "ŚWIAT": "https://tvn24.pl/swiat.xml"
+    "NBA NEWS": "https://www.espn.com/espn/rss/nba/news",
+    "NBA ANALYSIS": "https://www.cbssports.com/rss/headlines/nba/"
 }
 
 def wyczysc_html(tekst):
-    # Usuwa tagi <img> z opisu, aby nie dublować zdjęć
     return re.sub(r'<img.*?>', '', tekst)
 
 def generuj_artykul_ai(tytul, opis):
-    opis_clean = wyczysc_html(opis)
-    prompt = f"Napisz 3 krótkie zdania o: {tytul}. Fakty: {opis_clean}. Użyj tylko <p>."
+    prompt = f"Jesteś ekspertem NBA. Napisz 3 ekscytujące zdania o: {tytul}. Kontekst: {opis}. Użyj <p>."
     try:
         response = model.generate_content(prompt)
-        if response.text and len(response.text) > 20:
-            return response.text
-        return f"<p>{opis_clean[:200]}...</p>"
+        return response.text if response.text else f"<p>{opis[:200]}</p>"
     except:
-        return f"<p>{opis_clean[:200]}...</p>"
+        return f"<p>{opis[:200]}</p>"
 
 def generuj_komentarze_ai(tytul):
-    prompt = f"Napisz 3 krótkie, JEDNOZDANIOWE opinie fikcyjnych ludzi o tytule: {tytul}. 1.Janusz(fajnie), 2.Grażyna(narzeka), 3.Profesor(mądrze). Formatuj: <div class='comment'><b>Imię:</b> Treść</div>"
+    prompt = f"""Wymyśl 3 krótkie komentarze fanów NBA do newsa: '{tytul}':
+    1. Seba (fanatyk Lakers, dużo ognia 🔥)
+    2. Ekspert (pisze o statystykach i taktyce)
+    3. Hejter (narzeka, że kiedyś NBA była lepsza)
+    Format: <div class='comment'><b>Imię:</b> Treść</div>"""
     try:
         response = model.generate_content(prompt)
-        # Jeśli AI zablokuje, rzuć błąd do except
-        if not response.text: raise Exception()
-        return f"<div class='comments-section'><h4>Komentarze czytelników:</h4>{response.text}</div>"
+        return f"<div class='comments-section'><h4>Dyskusja pod halą:</h4>{response.text}</div>"
     except:
-        # Rezerwowe komentarze, gdy AI blokuje temat wojenny
-        return f"""<div class='comments-section'><h4>Komentarze czytelników:</h4>
-        <div class='comment'><b>Janusz:</b> Ważny temat, dobrze że o tym piszecie! 🧐</div>
-        <div class='comment'><b>Grażyna:</b> Znowu takie wieści, strach włączać internet.</div>
-        <div class='comment'><b>Profesor:</b> Sytuacja wymaga głębokiej analizy geopolitycznej.</div></div>"""
+        return ""
 
 def pobierz_obrazek(url):
     try:
         res = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=5)
         soup = BeautifulSoup(res.content, 'html.parser')
         img = soup.find('meta', property='og:image')
-        return img['content'] if img else ""
-    except: return ""
+        return img['content'] if img else "https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800"
+    except: return "https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800"
 
 def stworz_gazete():
     teraz = datetime.now().strftime("%d.%m.%Y | %H:%M")
@@ -72,7 +61,7 @@ def stworz_gazete():
             with urllib.request.urlopen(req, context=context) as response:
                 feed = feedparser.parse(response.read())
             html_items += f"<div class='category-header'>{nazwa}</div>"
-            for news in feed.entries[:2]:
+            for news in feed.entries[:3]:
                 img = pobierz_obrazek(news.link)
                 tresc = generuj_artykul_ai(news.title, getattr(news, 'summary', ''))
                 komentarze = generuj_komentarze_ai(news.title)
@@ -83,17 +72,19 @@ def stworz_gazete():
     szablon = f"""
     <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body {{ font-family: sans-serif; background: #1a1c2c; color: #eee; margin: 0; padding: 20px; }}
-        .container {{ max-width: 700px; margin: auto; }}
-        h1 {{ text-align: center; color: #4ecca3; font-size: 3rem; }}
-        .category-header {{ background: #4ecca3; color: #1a1c2c; padding: 10px; border-radius: 5px; margin-top: 30px; font-weight: bold; }}
-        .news-card {{ background: #232946; margin: 20px 0; padding: 20px; border-radius: 15px; border: 1px solid #4ecca3; }}
-        .news-img {{ width: 100%; border-radius: 10px; margin: 15px 0; display: block; }}
-        .comments-section {{ background: #1a1c2c; padding: 15px; border-radius: 10px; margin-top: 20px; }}
-        .comment {{ font-size: 0.9rem; margin-bottom: 10px; color: #b8c1ec; border-bottom: 1px solid #232946; padding-bottom: 5px; }}
-        .comment b {{ color: #4ecca3; }}
+        body {{ font-family: 'Arial Black', sans-serif; background: #000; color: #fff; margin: 0; padding: 20px; }}
+        .container {{ max-width: 800px; margin: auto; }}
+        h1 {{ text-align: center; color: #F58426; font-size: 4rem; text-transform: uppercase; border-bottom: 5px solid #1D428A; }}
+        .category-header {{ background: #1D428A; color: #fff; padding: 10px; margin-top: 30px; border-radius: 5px; }}
+        .news-card {{ background: #111; margin: 20px 0; padding: 25px; border-radius: 0; border-left: 10px solid #F58426; box-shadow: 5px 5px 0px #1D428A; }}
+        .news-img {{ width: 100%; border: 2px solid #333; margin: 15px 0; }}
+        h2 {{ color: #F58426; text-transform: uppercase; font-size: 1.5rem; }}
+        p {{ color: #ccc; line-height: 1.6; }}
+        .comments-section {{ background: #222; padding: 15px; margin-top: 20px; border-radius: 5px; }}
+        .comment {{ font-size: 0.9rem; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; color: #aaa; }}
+        .comment b {{ color: #F58426; }}
     </style></head>
-    <body><div class="container"><h1>THE AI TIMES</h1><p style="text-align:center">Wydanie: {teraz}</p>{html_items}</div></body></html>"""
+    <body><div class="container"><h1>NBA DAILY</h1><p style="text-align:center">Aktualizacja: {teraz}</p>{html_items}</div></body></html>"""
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(szablon)
 
