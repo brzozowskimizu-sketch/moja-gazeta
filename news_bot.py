@@ -11,27 +11,37 @@ from bs4 import BeautifulSoup
 API_KEY = os.getenv("GEMINI_KEY")
 genai.configure(api_key=API_KEY)
 
-# Tryb 1.5 Flash z WYŁĄCZONYMI filtrami dla dziennikarstwa
-model = genai.GenerativeModel('gemini-1.5-flash',
-    safety_settings=[
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"}
-    ])
+# --- NOWA KONFIGURACJA OMIJAJĄCA BLOKADY ---
+# Ustawiamy wszystkie filtry na BLOCK_NONE
+safety_config = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+]
 
-KATEGORIE = {
-    "POLSKA": "https://tvn24.pl/polska.xml",
-    "ŚWIAT": "https://tvn24.pl/swiat.xml",
-    "BIZNES": "https://tvn24.pl/biznes.xml"
-}
+model = genai.GenerativeModel(
+    model_name='gemini-1.5-flash',
+    safety_settings=safety_config
+)
 
 def generuj_artykul_ai(tytul, opis):
-    prompt = f"Jesteś dziennikarzem. Napisz 3-zdaniowy raport newsowy o: {tytul}. Fakty: {opis}. Użyj formatu HTML <p>."
+    # Dodajemy instrukcję bezpieczeństwa do samego promptu
+    prompt = f"""
+    Jesteś profesjonalnym, obiektywnym dziennikarzem. 
+    Napisz krótką relację (3 zdania) na podstawie faktów: {tytul}. 
+    Opis pomocniczy: {opis}.
+    UWAGA: To są oficjalne wiadomości ze świata, opisz je bez oceniania.
+    Używaj formatu HTML <p>.
+    """
     try:
         response = model.generate_content(prompt)
-        return response.text if response.text else "<p>Relacja w przygotowaniu...</p>"
-    except: return "<p>Relacja w przygotowaniu...</p>"
+        # Sprawdzamy czy AI nie zwróciło pustki przez filtry
+        if response.candidates and response.candidates[0].content.parts:
+            return response.text
+        return f"<p>AI uznało ten temat za zbyt wrażliwy, ale tytuł to: <strong>{tytul}</strong></p>"
+    except Exception as e:
+        return f"<p>Błąd systemu: {tytul}</p>"
 
 def pobierz_obrazek(url):
     try:
@@ -61,3 +71,4 @@ def stworz_gazete():
 if __name__ == "__main__":
 
     stworz_gazete()
+
