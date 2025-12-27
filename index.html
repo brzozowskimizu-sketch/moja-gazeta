@@ -2,65 +2,74 @@
     <html><head><meta charset="utf-8">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background: #121212; color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        header { background: #1a1a1a; padding: 30px; border-radius: 15px; border-bottom: 4px solid #f58426; text-align: center; margin-bottom: 40px; }
-        h1 { font-weight: 900; font-size: 3.5rem; color: #fff; margin: 0; letter-spacing: -2px; }
+        body { background: #1a1a1a; color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; max-width: 1200px; margin: auto; }
+        header { text-align: left; padding: 20px 0; border-bottom: 1px solid #333; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-weight: 900; font-size: 2.5rem; text-transform: uppercase; margin: 0; }
         h1 span { color: #f58426; }
-        .section-title { font-size: 1.2rem; font-weight: bold; color: #f58426; text-transform: uppercase; margin: 40px 0 20px 0; border-left: 5px solid #1d428a; padding-left: 15px; }
-        .card { background: #1e1e1e; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 1px solid #333; }
-        .card-header { font-size: 0.7rem; font-weight: bold; color: #f58426; border: 1px dashed #f58426; display: inline-block; padding: 2px 8px; margin-bottom: 15px; }
-        h2 { font-size: 1.6rem; margin: 0 0 15px 0; line-height: 1.2; }
-        .img { width: 100%; border-radius: 8px; filter: brightness(0.9); }
-        .content { color: #bbb; line-height: 1.6; margin: 20px 0; font-size: 1.05rem; }
-        .comm-box { background: #141414; padding: 20px; border-radius: 10px; border-left: 4px solid #1d428a; }
-        .comm-box h5 { margin: 0 0 10px 0; font-size: 0.8rem; color: #1d428a; text-transform: uppercase; }
-        .comment { font-size: 0.9rem; color: #999; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 5px; }
-        .comment b { color: #f58426; }
+        .main-card { background: #252525; padding: 20px; border-radius: 4px; position: relative; }
+        .main-card img { width: 100%; border-radius: 4px; margin: 15px 0; }
+        .tag { position: absolute; top: 35px; left: 35px; background: #f58426; color: #000; font-size: 0.7rem; font-weight: bold; padding: 2px 10px; }
+        .side-panel { background: #252525; padding: 20px; border-radius: 4px; }
+        .side-item { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .side-item img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }
+        .side-item h4 { margin: 0; font-size: 0.9rem; line-height: 1.2; }
+        .comments { margin-top: 20px; font-size: 0.8rem; color: #f58426; border-top: 1px solid #333; padding-top: 10px; }
+        h2 { font-size: 2rem; margin: 10px 0; }
+        p { color: #aaa; line-height: 1.6; }
     </style></head>
-    <body><div class='container'>
-        <header><h1>NBA<span>DZISIAJ</span></h1><p>POLSKA EDYCJA | 27.12.2025 | 16:34</p></header>
-        <div class='section-title'>NBA POLSKA - NAJNOWSZE</div>
-                <div class='card'>
-                    <div class='card-header'>NEWS</div>
-                    <h2>Reasons for optimism and pessimism for all 10 NBA teams that played on Christmas</h2>
-                    <img src='https://a2.espncdn.com/combiner/i?img=%2Fphoto%2F2025%2F1226%2Fr1593630_1296x729_16%2D9.jpg' class='img'>
-                    <div class='content'><p>Reasons for optimism and pessimism for all 10 NBA teams that played on Christmas</p></div>
-                    <div class='comm-box'><h5>DYSKUSJA FANÓW:</h5><div class='comment'><b>Mirek:</b> Solidne info!</div></div>
-                </div>
-                <div class='card'>
-                    <div class='card-header'>NEWS</div>
-                    <h2>Sources: Giannis expected to return against Bulls</h2>
-                    <img src='https://a3.espncdn.com/combiner/i?img=%2Fphoto%2F2025%2F1206%2Fr1585506_1296x729_16%2D9.jpg' class='img'>
-                    <div class='content'><p>Sources: Giannis expected to return against Bulls</p></div>
-                    <div class='comm-box'><h5>DYSKUSJA FANÓW:</h5><div class='comment'><b>Mirek:</b> Solidne info!</div></div>
-                </div>
-                <div class='card'>
-                    <div class='card-header'>NEWS</div>
-                    <h2>Lakers' Reaves (calf strain) out at least 1 month</h2>
-                    <img src='https://a.espncdn.com/combiner/i?img=%2Fphoto%2F2025%2F1111%2Fr1574028_1296x729_16%2D9.jpg' class='img'>
-                    <div class='content'><p>Lakers' Reaves (calf strain) out at least 1 month</p></div>
-                    <div class='comm-box'><h5>DYSKUSJA FANÓW:</h5><div class='comment'><b>Mirek:</b> Solidne info!</div></div>
-                </div><div class='section-title'>ANALIZY EKSPERCKIE</div>
-                <div class='card'>
-                    <div class='card-header'>NEWS</div>
-                    <h2>Austin Reaves injury update: Lakers star guard (calf) out at least four weeks, per report</h2>
-                    <img src='https://sportshub.cbsistatic.com/i/r/2025/12/27/72b1fe47-d4dd-478c-9dad-7f4e1c13b919/thumbnail/1200x675/0928f5068d9d7fcd63ce0853324ed704/untitled-design-145.png' class='img'>
-                    <div class='content'><p>Austin Reaves injury update: Lakers star guard (calf) out at least four weeks, per report</p></div>
-                    <div class='comm-box'><h5>DYSKUSJA FANÓW:</h5><div class='comment'><b>Mirek:</b> Solidne info!</div></div>
-                </div>
-                <div class='card'>
-                    <div class='card-header'>NEWS</div>
-                    <h2>Today's top games to watch, best bets, odds: 76ers at Bulls, Clippers at Blazers, college football and more</h2>
-                    <img src='https://sportshub.cbsistatic.com/i/r/2025/03/03/562290c8-3dd9-4359-8b0b-7c374e0886ba/thumbnail/1200x675/8600abfcf1d3be6c9d112c6fc3e6f572/tyrese-maxey-cbs-2.jpg' class='img'>
-                    <div class='content'><p>Today's top games to watch, best bets, odds: 76ers at Bulls, Clippers at Blazers, college football and more</p></div>
-                    <div class='comm-box'><h5>DYSKUSJA FANÓW:</h5><div class='comment'><b>Mirek:</b> Solidne info!</div></div>
-                </div>
-                <div class='card'>
-                    <div class='card-header'>NEWS</div>
-                    <h2>JJ Redick torched Lakers' players after Christmas loss, but the real blame lies with the GM who acquired them</h2>
-                    <img src='https://sportshub.cbsistatic.com/i/r/2025/12/26/8925b2fe-e2b4-4f4b-b805-6ec7a752d3be/thumbnail/1200x675/5e7aac2d9e9d91e4dfe58dd7ef456d5a/jj-redick-getty-5.png' class='img'>
-                    <div class='content'><p>JJ Redick torched Lakers' players after Christmas loss, but the real blame lies with the GM who acquired them</p></div>
-                    <div class='comm-box'><h5>DYSKUSJA FANÓW:</h5><div class='comment'><b>Mirek:</b> Solidne info!</div></div>
-                </div>
-    </div></body></html>
+    <body>
+        <div class='container'>
+            <header><h1>NBA <span>TODAY</span></h1><div>27.12.2025 | 16:40</div></header>
+            <div class='grid'>
+                <div class='left-col'>
+                    <div class='main-card'>
+                        <div class='tag'>NEWS</div>
+                        <img src='https://a2.espncdn.com/combiner/i?img=%2Fphoto%2F2025%2F1226%2Fr1593630_1296x729_16%2D9.jpg'>
+                        <h2>Reasons for optimism and pessimism for all 10 NBA teams that played on Christmas</h2>
+                        <p>Aktualizacja z parkietów NBA. Kliknij po więcej informacji.</p>
+                        <div class='comments'>
+                            <b>Mirek:</b> Solidne info! | <b>Młody:</b> 🔥 GOAT!
+                        </div>
+                    </div>
+                    <div class='main-card'>
+                        <div class='tag'>NEWS</div>
+                        <img src='https://sportshub.cbsistatic.com/i/r/2025/12/27/72b1fe47-d4dd-478c-9dad-7f4e1c13b919/thumbnail/1200x675/0928f5068d9d7fcd63ce0853324ed704/untitled-design-145.png'>
+                        <h2>Austin Reaves injury update: Lakers star guard (calf) out at least four weeks, per report</h2>
+                        <p>Aktualizacja z parkietów NBA. Kliknij po więcej informacji.</p>
+                        <div class='comments'>
+                            <b>Mirek:</b> Solidne info! | <b>Młody:</b> 🔥 GOAT!
+                        </div>
+                    </div></div>
+                <div class='side-panel'><h3>LIVE SCORES</h3>
+                    <div class='side-item'>
+                        <img src='https://a3.espncdn.com/combiner/i?img=%2Fphoto%2F2025%2F1206%2Fr1585506_1296x729_16%2D9.jpg'>
+                        <div>
+                            <h4>Sources: Giannis expected to return against Bulls</h4>
+                            <span>27.12.2025 | 16:40</span>
+                        </div>
+                    </div>
+                    <div class='side-item'>
+                        <img src='https://a.espncdn.com/combiner/i?img=%2Fphoto%2F2025%2F1111%2Fr1574028_1296x729_16%2D9.jpg'>
+                        <div>
+                            <h4>Lakers' Reaves (calf strain) out at least 1 month</h4>
+                            <span>27.12.2025 | 16:40</span>
+                        </div>
+                    </div>
+                    <div class='side-item'>
+                        <img src='https://sportshub.cbsistatic.com/i/r/2025/03/03/562290c8-3dd9-4359-8b0b-7c374e0886ba/thumbnail/1200x675/8600abfcf1d3be6c9d112c6fc3e6f572/tyrese-maxey-cbs-2.jpg'>
+                        <div>
+                            <h4>Today's top games to watch, best bets, odds: 76ers at Bulls, Clippers at Blazers, college football and more</h4>
+                            <span>27.12.2025 | 16:40</span>
+                        </div>
+                    </div>
+                    <div class='side-item'>
+                        <img src='https://sportshub.cbsistatic.com/i/r/2025/12/26/8925b2fe-e2b4-4f4b-b805-6ec7a752d3be/thumbnail/1200x675/5e7aac2d9e9d91e4dfe58dd7ef456d5a/jj-redick-getty-5.png'>
+                        <div>
+                            <h4>JJ Redick torched Lakers' players after Christmas loss, but the real blame lies with the GM who acquired them</h4>
+                            <span>27.12.2025 | 16:40</span>
+                        </div>
+                    </div></div>
+            </div>
+        </div>
+    </body></html>
